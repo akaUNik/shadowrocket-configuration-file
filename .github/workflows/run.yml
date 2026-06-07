@@ -423,6 +423,28 @@ jobs:
           sed -i "1s/^/# @misha-tgshv, built on $(TZ=\"Asia/Novokuznetsk\" date)\n/" conf/${CONFNAME}
           rm conf/General.tmp
 
+      - name: Создаем sr_ru_usa_geo.conf
+        run: |
+          CONFNAME="sr_ru_usa_geo.conf"
+          cp conf/sr_ru_geo.conf conf/${CONFNAME}
+          sed -i "s|^update-url =.*|update-url = https://cdn.jsdelivr.net/gh/misha-tgshv/shadowrocket-configuration-file@main/conf/${CONFNAME}|" conf/${CONFNAME}
+          sed -i 's|^# \[Proxy Group\]$|[Proxy Group]|' conf/${CONFNAME}
+          sed -i '/^Israel-Group =/s/^/# /' conf/${CONFNAME}
+          sed -i 's|^AUTO =.*|AUTO = url-test, policy-regex-filter=(vpn), interval=600, timeout=5, url=http://www.gstatic.com/generate_204|' conf/${CONFNAME}
+          sed -i '/^AUTO =/a VPN-USA = url-test, policy-regex-filter=(vpn-usa), interval=600, timeout=5, url=http://www.gstatic.com/generate_204' conf/${CONFNAME}
+          awk '
+            /^\[Rule\]$/ {
+              print
+              print "DOMAIN-SUFFIX,gemini.google.com,VPN-USA"
+              print "DOMAIN-SUFFIX,ai.google.dev,VPN-USA"
+              print "DOMAIN-SUFFIX,notebooklm.google,VPN-USA"
+              print ""
+              next
+            }
+            { print }
+          ' conf/${CONFNAME} > conf/${CONFNAME}.tmp
+          mv conf/${CONFNAME}.tmp conf/${CONFNAME}
+
       # --- Коммитим и пушим ---
       - name: Настраиваем git
         run: |
